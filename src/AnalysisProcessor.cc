@@ -614,6 +614,9 @@ void AnalysisProcessor::processEvent( LCEvent * evt )
 				if ( cellID[2] >= _nActiveLayers )
 					continue ;
 
+//				if ( cellID[2] == 1 || cellID[2] == 34 )
+//					continue ;
+
 				if ( cellID[0] < 1 || cellID[0] > 96 || cellID[1] < 1 || cellID[1] > 96 )
 					continue ;
 

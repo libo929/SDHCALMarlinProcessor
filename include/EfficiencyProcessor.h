@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <limits>
+#include <array>
 
 #include "CaloObject/CaloGeom.h"
 #include "CaloObject/CaloHit.h"
@@ -55,18 +56,16 @@ class EfficiencyProcessor : public Processor
    */
 		virtual void processEvent( LCEvent * evt ) ;
 
-
-		virtual void check(LCEvent* ) ;
-
-
 		/** Called after data processing for clean up.
    */
 		virtual void end() ;
 
-		void AlgorithmRegistrationParameters();
-		void LayerProperties(std::vector<caloobject::CaloCluster2D*> &clusters);
-		void clearVec();
-		void DoTracking();
+		void AlgorithmRegistrationParameters() ;
+		void LayerProperties(std::vector<caloobject::CaloCluster2D*> &clusters) ;
+		void clearVec() ;
+		void DoTracking() ;
+
+		static std::array<double,2> getEfficienciesBound(int nDetected , int nTracks) ;
 
 		//		inline int findAsicID(int key) {return sdhcal_asic_table[ 4*(key%1000%12) + (key%1000/12)%4 ] ; }
 
@@ -146,6 +145,9 @@ class EfficiencyProcessor : public Processor
 
 		std::vector<double> efficiencies = {} ;
 		std::vector<double> efficienciesError = {} ;
+
+		std::vector<double> efficienciesLowerBound = {} ;
+		std::vector<double> efficienciesUpperBound = {} ;
 
 		int nTracks = 0 ;
 

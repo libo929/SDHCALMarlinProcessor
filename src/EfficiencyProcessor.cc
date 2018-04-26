@@ -11,6 +11,7 @@
 #include "marlin/VerbosityLevels.h"
 #include <string>
 
+#include <TEfficiency.h>
 #include "json.hpp"
 
 using namespace lcio ;
@@ -346,6 +347,8 @@ void EfficiencyProcessor::init()
 	tree->Branch("Efficiencies" , "std::vector<double>" , &efficiencies ) ;
 	tree->Branch("EfficienciesError" , "std::vector<double>" , &efficienciesError ) ;
 
+	tree->Branch("EfficienciesLowerBound" , "std::vector<double>" , &efficienciesLowerBound ) ;
+	tree->Branch("EfficienciesUpperBound" , "std::vector<double>" , &efficienciesUpperBound ) ;
 
 	tree->Branch("Multiplicities" , "std::vector<double>" , &multiplicities) ;
 	tree->Branch("MultiplicitiesError" , "std::vector<double>" , &multiplicitiesError) ;
@@ -456,6 +459,23 @@ void EfficiencyProcessor::LayerProperties(std::vector<caloobject::CaloCluster2D*
 	}
 }
 
+
+std::array<double,2> EfficiencyProcessor::getEfficienciesBound(int nDetected , int nTracks)
+{
+	constexpr double level = 0.683 ;
+
+	double a = double( nDetected ) + 1 ;
+	double b = double( nTracks - nDetected ) + 1 ;
+
+	double lowerBound = 0 ;
+	double upperBound = 0 ;
+	TEfficiency::BetaShortestInterval( level , a , b , lowerBound , upperBound ) ;
+
+	std::array<double , 2> toReturn = {{ lowerBound , upperBound }} ;
+	return toReturn ;
+}
+
+
 void EfficiencyProcessor::processEvent( LCEvent * evt )
 {
 	for (unsigned int i(0); i < _hcalCollections.size(); ++i)
@@ -511,12 +531,6 @@ void EfficiencyProcessor::clearVec()
 }
 
 
-void EfficiencyProcessor::check(LCEvent* )
-{
-	// nothing to check here - could be used to fill checkplots in reconstruction processor
-}
-
-
 void EfficiencyProcessor::end()
 {
 	file->cd() ;
@@ -555,6 +569,10 @@ void EfficiencyProcessor::end()
 				efficiencies = padIt->second->getEfficiencies() ;
 				efficienciesError = padIt->second->getEfficienciesError() ;
 
+				auto bound = padIt->second->getEfficienciesBound() ;
+				efficienciesLowerBound = bound[0] ;
+				efficienciesUpperBound = bound[1] ;
+
 				multiplicities = padIt->second->getMultiplicities() ;
 				multiplicitiesError = padIt->second->getMultiplicitiesError() ;
 
@@ -574,6 +592,10 @@ void EfficiencyProcessor::end()
 
 			efficiencies = asicIt->second->getEfficiencies() ;
 			efficienciesError = asicIt->second->getEfficienciesError() ;
+
+			auto bound = asicIt->second->getEfficienciesBound() ;
+			efficienciesLowerBound = bound[0] ;
+			efficienciesUpperBound = bound[1] ;
 
 			multiplicities = asicIt->second->getMultiplicities() ;
 			multiplicitiesError = asicIt->second->getMultiplicitiesError() ;
@@ -596,6 +618,10 @@ void EfficiencyProcessor::end()
 
 		efficiencies = (*layIt)->getEfficiencies() ;
 		efficienciesError = (*layIt)->getEfficienciesError() ;
+
+		auto bound = (*layIt)->getEfficienciesBound() ;
+		efficienciesLowerBound = bound[0] ;
+		efficienciesUpperBound = bound[1] ;
 
 		multiplicities = (*layIt)->getMultiplicities() ;
 		multiplicitiesError = (*layIt)->getMultiplicitiesError() ;
@@ -648,8 +674,12 @@ void EfficiencyProcessor::end()
 	for ( unsigned int i = 0 ; i < thresholds.size() ; ++i )
 	{
 		efficiencies.at(i) = ( globalEff.at(i)/layers.size() ) ;
-		//		efficiencies.at(i) = ( globalEff.at(i)/(layers.size()-2) ) ;
+		//				efficiencies.at(i) = ( globalEff.at(i)/(layers.size()-2) ) ;
 		efficienciesError.at(i) = std::sqrt( 1.0/globalEffErr.at(i) ) ;
+
+		auto bound = getEfficienciesBound( static_cast<int>(efficiencies.at(i)*nTracks) , nTracks ) ;
+		efficienciesLowerBound.at(i) = bound[0] ;
+		efficienciesUpperBound.at(i) = bound[1] ;
 	}
 
 	multiplicities = globalMul ;
