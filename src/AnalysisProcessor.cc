@@ -283,6 +283,8 @@ void AnalysisProcessor::init()
 	tree->Branch("neutral" , &neutral) ;
 
 	tree->Branch("emFraction" , &emFraction) ;
+	tree->Branch("depositedEnergy" , &depositedEnergy) ;
+	tree->Branch("leakedEnergy" , &leakedEnergy) ;
 
 	tree->Branch("I" , "std::vector<int>" , &iVec) ;
 	tree->Branch("J" , "std::vector<int>" , &jVec) ;
@@ -808,6 +810,8 @@ void AnalysisProcessor::processEvent( LCEvent * evt )
 				energy = evt->getParameters().getFloatVal( std::string("ParticleEnergy") ) ;
 
 			emFraction = evt->getParameters().getFloatVal( std::string("EMFraction") ) ;
+			depositedEnergy = evt->getParameters().getFloatVal( std::string("DepositedEnergy") ) ;
+			leakedEnergy = evt->getParameters().getFloatVal( std::string("LeakedEnergy") ) ;
 
 			computingTime = 1.0*( clock() - beginClock )/CLOCKS_PER_SEC ;
 
